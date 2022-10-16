@@ -1,0 +1,6 @@
+{
+    "BotToken": "XXXXXXXX",
+    "SqliteDb": "hn_feed.db",
+    "AdminIds": [12345],
+    "DefaultUpdateIntervalMins": 60,
+}
