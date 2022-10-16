@@ -7,10 +7,10 @@ import (
 )
 
 type ConfigT struct {
-	BotToken                  string
-	SqliteDb                  string
-	AdminIds                  []int64
-	DefaultUpdateIntervalMins int
+	BotToken           string
+	SqliteDb           string
+	AdminIds           []int64
+	UpdateIntervalMins int
 }
 
 var Config *ConfigT
