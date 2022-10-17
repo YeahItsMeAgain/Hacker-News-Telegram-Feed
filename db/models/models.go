@@ -6,7 +6,8 @@ import (
 
 type Channel struct {
 	gorm.Model
-	TgId          int64  `gorm:"uniqueIndex"`
+	TgId          int64 `gorm:"uniqueIndex"`
+	Title         string
 	TopPostsCount int    `gorm:"default:10"`
 	Posts         []Post `gorm:"many2many:channels_posts;"`
 }

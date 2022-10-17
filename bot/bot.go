@@ -2,7 +2,6 @@ package bot
 
 import (
 	"hn_feed/bot/handlers"
-	"hn_feed/bot/middlewares"
 	"hn_feed/bot/utils"
 	"hn_feed/config"
 	"log"
@@ -28,8 +27,12 @@ func Run(bot *telebot.Bot) {
 func initHandlers(bot *telebot.Bot) {
 	bot.Handle("/start", handlers.HandleStart)
 
-	bot.Handle(telebot.OnChannelPost, handlers.OnChannelConfigureCount, middlewares.ChannelCommand("/set"))
-	bot.Handle(telebot.OnChannelPost, handlers.OnChannelRegister, middlewares.ChannelCommand("/register"))
+	bot.Handle(telebot.OnChannelPost, handlers.CreateChannelCommandsHandler(
+		map[string]telebot.HandlerFunc{
+			"/set":      handlers.OnChannelConfigureCount,
+			"/register": handlers.OnChannelRegister,
+		},
+	))
 
 	admin := bot.Group()
 	admin.Use(middleware.Whitelist(config.Config.AdminIds...))

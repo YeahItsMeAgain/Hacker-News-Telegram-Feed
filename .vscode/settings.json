@@ -2,6 +2,7 @@
     "cSpell.words": [
         "gorm",
         "middlewares",
-        "telebot"
+        "telebot",
+        "Upsert"
     ]
 }

@@ -1,17 +1,79 @@
 package handlers
 
 import (
-	middlwares "hn_feed/bot/middlewares"
+	"fmt"
+	"hn_feed/bot/utils"
+	"hn_feed/db/models"
+	db_utils "hn_feed/db/utils"
+	"log"
+	"strconv"
+	"strings"
 
 	"gopkg.in/telebot.v3"
 )
 
+const (
+	channelCommandPayloadKey = "ChannelCommandPayloadKey"
+)
+
+func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) telebot.HandlerFunc {
+	return func(ctx telebot.Context) error {
+		text := ctx.Text()
+		input := strings.SplitN(text, " ", 2)
+		if len(input) > 1 {
+			ctx.Set(channelCommandPayloadKey, input[1])
+		}
+
+		for command, handler := range handlers {
+			if strings.HasPrefix(text, command) {
+				return handler(ctx)
+			}
+		}
+		return nil
+	}
+}
+
 func OnChannelRegister(ctx telebot.Context) error {
 	ctx.Delete()
-	return ctx.Send("🚀 Registered!\n Set the number of top posts you want to see with /set <count>.")
+	chat := ctx.Chat()
+	db_utils.UpsertByTgId(
+		&models.Channel{
+			TgId:  chat.ID,
+			Title: chat.Title,
+		},
+	)
+
+	log.Printf("[*] Registered: %d - %s - %s.", chat.ID, chat.Title, chat.Username)
+	return utils.SendAndDelete(
+		ctx,
+		"🚀 Registered!\n\nSet the number of top posts you want to see with\n/set <count>.",
+	)
 }
 
 func OnChannelConfigureCount(ctx telebot.Context) error {
-	payload := ctx.Get(middlwares.ChannelCommandPayloadKey)
-	return ctx.Send(payload)
+	ctx.Delete()
+	payload := ctx.Get(channelCommandPayloadKey)
+	if payload == nil || payload == "" {
+		return utils.SendAndDelete(ctx, "❗ Specify the number of top posts you want to see!")
+	}
+
+	count, err := strconv.Atoi(payload.(string))
+	if err != nil ||
+		count < 1 || count > 100 {
+		return utils.SendAndDelete(ctx, "❗ The count should be between 1 and 100!")
+	}
+
+	chat := ctx.Chat()
+	db_utils.UpsertByTgId(
+		&models.Channel{
+			TgId:          chat.ID,
+			Title:         chat.Title,
+			TopPostsCount: count,
+		},
+	)
+	log.Printf("[*] Updated count of: %d - %s - %s to %d.", chat.ID, chat.Title, chat.Username, count)
+	return utils.SendAndDelete(
+		ctx,
+		fmt.Sprintf("🚀 Configured to: %d top posts per hour!", count),
+	)
 }

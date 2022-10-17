@@ -14,7 +14,6 @@ const START_MESSAGE = `👋 Welcome %s!
 Add me to a channel with the following permissions:
 - Post messages.
 - Delete messages of others.
-- Change channel info.
 
 And send /register in that channel.
 `
