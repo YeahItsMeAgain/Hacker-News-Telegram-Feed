@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
-        "telebot",
-        "gorm"
+        "gorm",
+        "middlewares",
+        "telebot"
     ]
 }
