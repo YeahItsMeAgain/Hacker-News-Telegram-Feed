@@ -54,7 +54,7 @@ func OnChannelHelp(ctx telebot.Context) error {
 		ctx,
 		`ℹ️ Available Commands:
 
-		/feed <topstories\newstories\beststories>
+		/feed <topstories\newstories>
 		/count <1-100>
 		/whitelist <:empty:\keyword\hostname>
 		/blacklist <:empty:\keyword\hostname>
@@ -65,12 +65,12 @@ func OnChannelHelp(ctx telebot.Context) error {
 func OnChannelConfigureFeedType(ctx telebot.Context) error {
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
-		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories\\beststories>!")
+		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories>!")
 	}
 
 	feedType := payload.(string)
 	if !slices.Contains(models.FeedTypes, feedType) {
-		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories\\beststories>!")
+		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories>!")
 	}
 
 	chat := ctx.Chat()

@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	FeedTypes = []string{"topstories", "newstories", "beststories"}
+	FeedTypes = []string{"topstories", "newstories"}
 )
 
 type Channel struct {
