@@ -32,7 +32,7 @@ func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) teleb
 				return handler(ctx)
 			}
 		}
-		return nil
+		return OnChannelHelp(ctx)
 	}
 }
 
@@ -54,10 +54,10 @@ func OnChannelHelp(ctx telebot.Context) error {
 		ctx,
 		`ℹ️ Available Commands:
 
-		- /feed <topstories\newstories\beststories>
-		- /count <1-100>
-		- /whitelist <keyword\hostname>
-		- /blacklist <keyword\hostname>
+		/feed <topstories\newstories\beststories>
+		/count <1-100>
+		/whitelist <keyword\hostname>
+		/blacklist <keyword\hostname>
 		`,
 	)
 }
