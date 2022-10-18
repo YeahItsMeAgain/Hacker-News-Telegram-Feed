@@ -45,7 +45,23 @@ func valToString(val reflect.Value) string {
 }
 
 func GetOrCreateChannel(TgId int64) models.Channel {
-	db_channel := models.Channel{TgId: TgId}
-	db.DB.FirstOrCreate(&db_channel, "tg_id = ?", TgId)
-	return db_channel
+	dbChannel := models.Channel{TgId: TgId}
+	db.DB.FirstOrCreate(&dbChannel, "tg_id = ?", TgId)
+	return dbChannel
+}
+
+func GetOrCreateKeyword(keyword string) models.Keyword {
+	dbKeyword := models.Keyword{Keyword: keyword}
+	db.DB.FirstOrCreate(&dbKeyword, "keyword = ?", keyword)
+	return dbKeyword
+}
+
+func GetAssociatedKeywords(channel *models.Channel, association string) []string {
+	var dbKeywords []models.Keyword
+	db.DB.Model(channel).Association(association).Find(&dbKeywords)
+	var keywords []string
+	for _, keyword := range dbKeywords {
+		keywords = append(keywords, keyword.Keyword)
+	}
+	return keywords
 }

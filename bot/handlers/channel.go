@@ -56,8 +56,8 @@ func OnChannelHelp(ctx telebot.Context) error {
 
 		/feed <topstories\newstories\beststories>
 		/count <1-100>
-		/whitelist <keyword\hostname>
-		/blacklist <keyword\hostname>
+		/whitelist <:empty:\keyword\hostname>
+		/blacklist <:empty:\keyword\hostname>
 		`,
 	)
 }
@@ -105,4 +105,37 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 		ctx,
 		fmt.Sprintf("🚀 Configured count to: %d posts per hour!", count),
 	)
+}
+
+func onChannelConfigureAssociationList(ctx telebot.Context, association string) error {
+	chat := ctx.Chat()
+	channel := db_utils.GetOrCreateChannel(chat.ID)
+	payload := ctx.Get(channelCommandPayloadKey)
+	if payload == nil || payload == "" {
+		return utils.SilentlySendAndDelete(ctx, strings.Join(
+			db_utils.GetAssociatedKeywords(&channel, association),
+			"\n",
+		))
+	}
+
+	keyword := db_utils.GetOrCreateKeyword(payload.(string))
+	var keywords []*models.Keyword
+	db.DB.Model(&channel).Where("keyword = ?", keyword.Keyword).Association(association).Find(&keywords)
+	if len(keywords) > 0 {
+		db.DB.Model(&channel).Association(association).Delete(&keyword)
+		log.Printf("[*] <%d - %s - %s> removed %s: %s.", chat.ID, chat.Title, chat.Username, association, keyword.Keyword)
+		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("🚀 Removed %s: %s", association, keyword.Keyword))
+	}
+
+	db.DB.Model(&channel).Association(association).Append(&keyword)
+	log.Printf("[*] <%d - %s - %s> added %s: %s.", chat.ID, chat.Title, chat.Username, association, keyword.Keyword)
+	return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("🚀 Added %s: %s", association, keyword.Keyword))
+}
+
+func OnChannelConfigureWhitelist(ctx telebot.Context) error {
+	return onChannelConfigureAssociationList(ctx, "WhitelistedKeywords")
+}
+
+func OnChannelConfigureBlacklist(ctx telebot.Context) error {
+	return onChannelConfigureAssociationList(ctx, "BlacklistedKeywords")
 }

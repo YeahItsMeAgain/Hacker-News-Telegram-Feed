@@ -21,4 +21,5 @@ func Init() {
 	}
 	DB.AutoMigrate(&models.Channel{})
 	DB.AutoMigrate(&models.Post{})
+	DB.AutoMigrate(&models.Keyword{})
 }
