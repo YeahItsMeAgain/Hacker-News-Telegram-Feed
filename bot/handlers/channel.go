@@ -43,8 +43,8 @@ func OnChannelRegister(ctx telebot.Context) error {
 		},
 	)
 
-	log.Printf("[*] Registered: %d - %s - %s.", chat.ID, chat.Title, chat.Username)
-	return utils.SendAndDelete(
+	log.Printf("[*] Registered: <%d - %s - %s>.", chat.ID, chat.Title, chat.Username)
+	return utils.SilentlySendAndDelete(
 		ctx,
 		"🚀 Registered!\n\nSet the number of top posts you want to see with\n/set <count>.",
 	)
@@ -54,13 +54,13 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 	ctx.Delete()
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
-		return utils.SendAndDelete(ctx, "❗ Specify the number of top posts you want to see!")
+		return utils.SilentlySendAndDelete(ctx, "❗ Specify the number of top posts you want to see!")
 	}
 
 	count, err := strconv.Atoi(payload.(string))
 	if err != nil ||
 		count < 1 || count > 100 {
-		return utils.SendAndDelete(ctx, "❗ The count should be between 1 and 100!")
+		return utils.SilentlySendAndDelete(ctx, "❗ The count should be between 1 and 100!")
 	}
 
 	chat := ctx.Chat()
@@ -71,8 +71,8 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 			TopPostsCount: count,
 		},
 	)
-	log.Printf("[*] Updated count of: %d - %s - %s to %d.", chat.ID, chat.Title, chat.Username, count)
-	return utils.SendAndDelete(
+	log.Printf("[*] Updated count of: <%d - %s - %s> to %d.", chat.ID, chat.Title, chat.Username, count)
+	return utils.SilentlySendAndDelete(
 		ctx,
 		fmt.Sprintf("🚀 Configured to: %d top posts per hour!", count),
 	)

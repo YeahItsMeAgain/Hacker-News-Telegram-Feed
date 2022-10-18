@@ -34,8 +34,8 @@ func CreateReplyMarkup(rows ...telebot.Row) [][]telebot.ReplyButton {
 	return replyKeys
 }
 
-func SendAndDelete(ctx telebot.Context, msg string) error {
-	reply, err := ctx.Bot().Send(ctx.Recipient(), msg)
+func SilentlySendAndDelete(ctx telebot.Context, msg string) error {
+	reply, err := ctx.Bot().Send(ctx.Recipient(), msg, telebot.Silent)
 	if err != nil {
 		return err
 	}
