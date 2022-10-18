@@ -3,12 +3,14 @@ package handlers
 import (
 	"fmt"
 	"hn_feed/bot/utils"
+	"hn_feed/db"
 	"hn_feed/db/models"
 	db_utils "hn_feed/db/utils"
 	"log"
 	"strconv"
 	"strings"
 
+	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
 )
 
@@ -36,12 +38,9 @@ func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) teleb
 
 func OnChannelRegister(ctx telebot.Context) error {
 	chat := ctx.Chat()
-	db_utils.UpsertByTgId(
-		&models.Channel{
-			TgId:  chat.ID,
-			Title: chat.Title,
-		},
-	)
+	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel.Title = chat.Title
+	db.DB.Save(&channel)
 
 	log.Printf("[*] Registered: <%d - %s - %s>.", chat.ID, chat.Title, chat.Username)
 	return utils.SilentlySendAndDelete(
@@ -63,10 +62,32 @@ func OnChannelHelp(ctx telebot.Context) error {
 	)
 }
 
+func OnChannelConfigureFeedType(ctx telebot.Context) error {
+	payload := ctx.Get(channelCommandPayloadKey)
+	if payload == nil || payload == "" {
+		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories\\beststories>!")
+	}
+
+	feedType := payload.(string)
+	if !slices.Contains(models.FeedTypes, feedType) {
+		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories\\beststories>!")
+	}
+
+	chat := ctx.Chat()
+	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel.FeedType = feedType
+	db.DB.Save(&channel)
+	log.Printf("[*] Updated feed type of: <%d - %s - %s> to %s.", chat.ID, chat.Title, chat.Username, payload)
+	return utils.SilentlySendAndDelete(
+		ctx,
+		fmt.Sprintf("🚀 Configured feed type to: %s!", payload),
+	)
+}
+
 func OnChannelConfigureCount(ctx telebot.Context) error {
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
-		return utils.SilentlySendAndDelete(ctx, "❗ Specify the number of top posts you want to see!")
+		return utils.SilentlySendAndDelete(ctx, "❗ Specify the number of posts you want to see!")
 	}
 
 	count, err := strconv.Atoi(payload.(string))
@@ -76,16 +97,12 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 	}
 
 	chat := ctx.Chat()
-	db_utils.UpsertByTgId(
-		&models.Channel{
-			TgId:          chat.ID,
-			Title:         chat.Title,
-			TopPostsCount: count,
-		},
-	)
+	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel.PostsCount = count
+	db.DB.Save(&channel)
 	log.Printf("[*] Updated count of: <%d - %s - %s> to %d.", chat.ID, chat.Title, chat.Username, count)
 	return utils.SilentlySendAndDelete(
 		ctx,
-		fmt.Sprintf("🚀 Configured to: %d top posts per hour!", count),
+		fmt.Sprintf("🚀 Configured count to: %d posts per hour!", count),
 	)
 }

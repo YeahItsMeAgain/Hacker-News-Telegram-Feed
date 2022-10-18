@@ -29,8 +29,8 @@ func initHandlers(bot *telebot.Bot) {
 
 	bot.Handle(telebot.OnChannelPost, handlers.CreateChannelCommandsHandler(
 		map[string]telebot.HandlerFunc{
-			"/help": handlers.OnChannelHelp,
-			// "/feed":  handlers.OnChannelConfigureFeedType,
+			"/help":  handlers.OnChannelHelp,
+			"/feed":  handlers.OnChannelConfigureFeedType,
 			"/count": handlers.OnChannelConfigureCount,
 			// "/whitelist": handlers.OnChannelConfigureWhitelist,
 			// "/blacklist": handlers.OnChannelConfigureBlacklist,

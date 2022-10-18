@@ -3,10 +3,9 @@ package utils
 import (
 	"fmt"
 	"hn_feed/db"
+	"hn_feed/db/models"
 	"reflect"
 	"strconv"
-
-	"gorm.io/gorm/clause"
 )
 
 func StructsToString[E any](elements []E) string {
@@ -45,11 +44,8 @@ func valToString(val reflect.Value) string {
 	}
 }
 
-func UpsertByTgId(model interface{}) {
-	db.DB.Clauses(
-		clause.OnConflict{
-			Columns:   []clause.Column{{Name: "tg_id"}},
-			UpdateAll: true,
-		},
-	).Create(model)
+func GetOrCreateChannel(TgId int64) models.Channel {
+	db_channel := models.Channel{TgId: TgId}
+	db.DB.FirstOrCreate(&db_channel, "tg_id = ?", TgId)
+	return db_channel
 }
