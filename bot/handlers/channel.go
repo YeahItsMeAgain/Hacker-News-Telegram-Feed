@@ -26,6 +26,7 @@ func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) teleb
 
 		for command, handler := range handlers {
 			if strings.HasPrefix(text, command) {
+				ctx.Delete()
 				return handler(ctx)
 			}
 		}
@@ -34,7 +35,6 @@ func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) teleb
 }
 
 func OnChannelRegister(ctx telebot.Context) error {
-	ctx.Delete()
 	chat := ctx.Chat()
 	db_utils.UpsertByTgId(
 		&models.Channel{
@@ -46,12 +46,24 @@ func OnChannelRegister(ctx telebot.Context) error {
 	log.Printf("[*] Registered: <%d - %s - %s>.", chat.ID, chat.Title, chat.Username)
 	return utils.SilentlySendAndDelete(
 		ctx,
-		"🚀 Registered!\n\nSet the number of top posts you want to see with\n/set <count>.",
+		"🚀 Registered!\n\nUse /help to see the configuration options.",
+	)
+}
+
+func OnChannelHelp(ctx telebot.Context) error {
+	return utils.SilentlySendAndDelete(
+		ctx,
+		`ℹ️ Available Commands:
+
+		- /feed <topstories\newstories\beststories>
+		- /count <1-100>
+		- /whitelist <keyword\hostname>
+		- /blacklist <keyword\hostname>
+		`,
 	)
 }
 
 func OnChannelConfigureCount(ctx telebot.Context) error {
-	ctx.Delete()
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
 		return utils.SilentlySendAndDelete(ctx, "❗ Specify the number of top posts you want to see!")

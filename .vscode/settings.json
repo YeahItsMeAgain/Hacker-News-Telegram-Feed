@@ -1,8 +1,11 @@
 {
     "cSpell.words": [
+        "beststories",
         "gorm",
         "middlewares",
+        "newstories",
         "telebot",
+        "topstories",
         "Upsert"
     ]
 }
