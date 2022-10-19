@@ -6,6 +6,8 @@ import (
 	"hn_feed/db/models"
 	"reflect"
 	"strconv"
+
+	"gorm.io/gorm/clause"
 )
 
 func StructsToString[E any](elements []E) string {
@@ -44,9 +46,13 @@ func valToString(val reflect.Value) string {
 	}
 }
 
-func GetOrCreateChannel(TgId int64) models.Channel {
+func GetOrCreateChannel(TgId int64, preload bool) models.Channel {
 	dbChannel := models.Channel{TgId: TgId}
-	db.DB.FirstOrCreate(&dbChannel, "tg_id = ?", TgId)
+	if preload {
+		db.DB.Preload(clause.Associations).FirstOrCreate(&dbChannel, "tg_id = ?", TgId)
+	} else {
+		db.DB.FirstOrCreate(&dbChannel, "tg_id = ?", TgId)
+	}
 	return dbChannel
 }
 

@@ -39,7 +39,7 @@ func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) teleb
 
 func OnChannelRegister(ctx telebot.Context) error {
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel := db_utils.GetOrCreateChannel(chat.ID, false)
 	channel.Title = chat.Title
 	db.DB.Save(&channel)
 
@@ -55,11 +55,25 @@ func OnChannelHelp(ctx telebot.Context) error {
 		ctx,
 		fmt.Sprintf(`ℹ️ Available Commands:
 
+		/info
 		/feed <topstories\newstories>
 		/count <1-%d>
 		/whitelist <:empty:\keyword\hostname>
 		/blacklist <:empty:\keyword\hostname>
 		`, config.Config.MaxPosts),
+	)
+}
+
+func OnChannelInfo(ctx telebot.Context) error {
+	channel := db_utils.GetOrCreateChannel(ctx.Chat().ID, true)
+	return utils.SilentlySendAndDelete(
+		ctx,
+		fmt.Sprintf(`ℹ️ Current Configuration:
+
+		Feed type: %s.
+		Max posts per hour: %d.
+		`, channel.FeedType, channel.PostsCount,
+		),
 	)
 }
 
@@ -75,7 +89,7 @@ func OnChannelConfigureFeedType(ctx telebot.Context) error {
 	}
 
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel := db_utils.GetOrCreateChannel(chat.ID, false)
 	channel.FeedType = feedType
 	db.DB.Save(&channel)
 	log.Printf("[*] Updated feed type of: <%d - %s - %s> to %s.", chat.ID, chat.Title, chat.Username, payload)
@@ -98,7 +112,7 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 	}
 
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel := db_utils.GetOrCreateChannel(chat.ID, false)
 	channel.PostsCount = count
 	db.DB.Save(&channel)
 	log.Printf("[*] Updated count of: <%d - %s - %s> to %d.", chat.ID, chat.Title, chat.Username, count)
@@ -110,7 +124,7 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 
 func onChannelConfigureAssociationList(ctx telebot.Context, association string) error {
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID)
+	channel := db_utils.GetOrCreateChannel(chat.ID, false)
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
 		return utils.SilentlySendAndDelete(ctx, strings.Join(
