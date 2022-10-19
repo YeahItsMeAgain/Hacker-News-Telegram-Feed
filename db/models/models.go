@@ -21,10 +21,10 @@ type Channel struct {
 
 type Post struct {
 	gorm.Model
-	PostId      int `gorm:"uniqueIndex"`
-	Url         string
-	Description string
-	Channels    []*Channel `gorm:"many2many:channels_posts;"`
+	PostId   int        `gorm:"uniqueIndex" json:"id"`
+	Url      string     `json:"url"`
+	Title    string     `json:"title"`
+	Channels []*Channel `gorm:"many2many:channels_posts;" json:",omitempty"`
 }
 
 type Keyword struct {

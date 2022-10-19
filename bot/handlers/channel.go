@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"hn_feed/bot/utils"
+	"hn_feed/config"
 	"hn_feed/db"
 	"hn_feed/db/models"
 	db_utils "hn_feed/db/utils"
@@ -52,13 +53,13 @@ func OnChannelRegister(ctx telebot.Context) error {
 func OnChannelHelp(ctx telebot.Context) error {
 	return utils.SilentlySendAndDelete(
 		ctx,
-		`ℹ️ Available Commands:
+		fmt.Sprintf(`ℹ️ Available Commands:
 
 		/feed <topstories\newstories>
-		/count <1-100>
+		/count <1-%d>
 		/whitelist <:empty:\keyword\hostname>
 		/blacklist <:empty:\keyword\hostname>
-		`,
+		`, config.Config.MaxPosts),
 	)
 }
 
@@ -92,8 +93,8 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 
 	count, err := strconv.Atoi(payload.(string))
 	if err != nil ||
-		count < 1 || count > 100 {
-		return utils.SilentlySendAndDelete(ctx, "❗ The count should be between 1 and 100!")
+		count < 1 || count > config.Config.MaxPosts {
+		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("❗ The count should be between 1 and %d!", config.Config.MaxPosts))
 	}
 
 	chat := ctx.Chat()

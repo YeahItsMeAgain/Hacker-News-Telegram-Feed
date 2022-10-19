@@ -3,7 +3,8 @@ module hn_feed
 go 1.19
 
 require (
-	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95
+	github.com/thoas/go-funk v0.9.2
+	golang.org/x/exp v0.0.0-20221018221608-02f3b879a704
 	gopkg.in/telebot.v3 v3.1.2
 	gorm.io/gorm v1.24.0
 )

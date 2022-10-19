@@ -11,6 +11,7 @@ type ConfigT struct {
 	SqliteDb           string
 	AdminIds           []int64
 	UpdateIntervalMins int
+	MaxPosts           int
 }
 
 var Config *ConfigT

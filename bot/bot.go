@@ -35,6 +35,7 @@ func initHandlers(bot *telebot.Bot) {
 			"/whitelist": handlers.OnChannelConfigureWhitelist,
 			"/blacklist": handlers.OnChannelConfigureBlacklist,
 			"/register":  handlers.OnChannelRegister,
+			// TODO: add /info handler
 		},
 	))
 
