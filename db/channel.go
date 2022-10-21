@@ -25,7 +25,7 @@ func (channel *Channel) FirstOrCreate() {
 	DB.FirstOrCreate(channel, "tg_id = ?", channel.TgId)
 }
 
-func (channel Channel) GetAssociatedKeywords(association string) string {
+func (channel *Channel) GetAssociatedKeywords(association string) string {
 	var dbKeywords []Keyword
 	DB.Model(&channel).Association(association).Find(&dbKeywords)
 	keywords := ""
@@ -35,7 +35,7 @@ func (channel Channel) GetAssociatedKeywords(association string) string {
 	return keywords
 }
 
-func (channel Channel) GetAssociatedKeywordsByKeyword(association string, keyword Keyword) []*Keyword {
+func (channel *Channel) GetAssociatedKeywordsByKeyword(association string, keyword Keyword) []*Keyword {
 	var keywords []*Keyword
 	DB.Model(&channel).Where("keyword = ?", keyword.Keyword).Association(association).Find(&keywords)
 	return keywords
