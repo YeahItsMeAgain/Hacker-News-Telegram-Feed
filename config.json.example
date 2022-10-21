@@ -3,5 +3,5 @@
     "SqliteDb": "hn_feed.db",
     "AdminIds": [12345],
     "UpdateIntervalMins": 60,
-    "MaxPosts": 100
+    "MaxPosts": 50
 }
