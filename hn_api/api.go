@@ -9,8 +9,6 @@ import (
 	"hn_feed/db/models"
 	"net/http"
 	"sync"
-
-	"gorm.io/gorm/clause"
 )
 
 const baseUrl = "https://hacker-news.firebaseio.com/v0"
@@ -39,12 +37,16 @@ func GetNewPosts(feedType string) (map[int]models.Post, error) {
 
 			var post models.Post
 			json.NewDecoder(r.Body).Decode(&post)
-			if post.Url == "" || post.Title == "" {
+			if post.Title == "" {
 				return
 			}
 
+			if post.Url == "" {
+				post.Url = fmt.Sprintf("https://news.ycombinator.com/item?id=%d", post.PostId)
+			}
+
 			postsLock.Lock()
-			db.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&post)
+			db.DB.FirstOrCreate(&post, "post_id = ?", post.PostId) // Filling the ID field.
 			posts[postCount] = post
 			postsLock.Unlock()
 		}(i)

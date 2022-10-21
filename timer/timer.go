@@ -43,6 +43,7 @@ func ScheduleUpdates(bot *telebot.Bot) {
 }
 
 func updateChannels(feedType string, bot *telebot.Bot) {
+	start := time.Now()
 	log.Printf("[*] Updating channels with %s.", feedType)
 	posts, err := hn_api.GetNewPosts(feedType)
 	if err != nil {
@@ -61,10 +62,10 @@ func updateChannels(feedType string, bot *telebot.Bot) {
 		})
 		for _, channel := range channelsToUpdate.([]models.Channel) {
 			dbUpdates.Add(1)
-			go func(channelPost models.Post) {
+			go func(channel models.Channel, post models.Post) {
 				defer dbUpdates.Done()
-				db.DB.Model(&channel).Association("Posts").Append(&channelPost)
-			}(post)
+				db.DB.Model(&channel).Association("Posts").Append(&post)
+			}(channel, post)
 			bot.Send(
 				&telebot.User{ID: channel.TgId},
 				fmt.Sprintf("<b>%s</b>\n\n%s", post.Title, html.EscapeString(post.Url)),
@@ -74,5 +75,5 @@ func updateChannels(feedType string, bot *telebot.Bot) {
 		}
 	}
 	dbUpdates.Wait()
-	log.Printf("[*] Finished updates of %s.", feedType)
+	log.Printf("[*] Finished updates of %s, took: %s.", feedType, time.Since(start))
 }
