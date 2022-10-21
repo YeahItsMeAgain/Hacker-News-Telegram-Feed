@@ -3,8 +3,6 @@ package handlers
 import (
 	"hn_feed/bot/utils"
 	"hn_feed/db"
-	"hn_feed/db/models"
-	db_utils "hn_feed/db/utils"
 
 	"gopkg.in/telebot.v3"
 )
@@ -20,7 +18,7 @@ var (
 )
 
 func HandleAdminListChannels(ctx telebot.Context) error {
-	var channels []models.Channel
+	var channels []db.Channel
 	db.DB.Find(&channels)
-	return ctx.Send(db_utils.StructsToString(channels))
+	return ctx.Send(utils.StructsToString(channels))
 }

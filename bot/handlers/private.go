@@ -19,9 +19,10 @@ And send /register in that channel.
 `
 
 func HandleStart(ctx telebot.Context) error {
-	log.Printf("[*] %d : %s Started the bot.", ctx.Sender().ID, ctx.Sender().Username)
-	if slices.Contains(config.Config.AdminIds, ctx.Sender().ID) {
-		return ctx.Send(fmt.Sprintf(startMessage, ctx.Sender().FirstName), AdminMenu)
+	sender := ctx.Sender()
+	log.Printf("[*] <%d : %s> Started the bot.", sender.ID, sender.Username)
+	if slices.Contains(config.Config.AdminIds, sender.ID) {
+		return ctx.Send(fmt.Sprintf(startMessage, sender.FirstName), AdminMenu)
 	}
-	return ctx.Send(fmt.Sprintf(startMessage, ctx.Sender().FirstName))
+	return ctx.Send(fmt.Sprintf(startMessage, sender.FirstName))
 }

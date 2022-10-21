@@ -26,8 +26,7 @@ func Run(bot *telebot.Bot) {
 
 func initHandlers(bot *telebot.Bot) {
 	bot.Handle("/start", handlers.HandleStart)
-
-	bot.Handle(telebot.OnChannelPost, handlers.CreateChannelCommandsHandler(
+	bot.Handle(telebot.OnChannelPost, handlers.ChannelCommandsHandler(
 		map[string]telebot.HandlerFunc{
 			"/help":      handlers.OnChannelHelp,
 			"/info":      handlers.OnChannelInfo,

@@ -5,8 +5,6 @@ import (
 	"hn_feed/bot/utils"
 	"hn_feed/config"
 	"hn_feed/db"
-	"hn_feed/db/models"
-	db_utils "hn_feed/db/utils"
 	"log"
 	"strconv"
 	"strings"
@@ -19,7 +17,7 @@ const (
 	channelCommandPayloadKey = "ChannelCommandPayloadKey"
 )
 
-func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) telebot.HandlerFunc {
+func ChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) telebot.HandlerFunc {
 	return func(ctx telebot.Context) error {
 		text := ctx.Text()
 		input := strings.SplitN(text, " ", 2)
@@ -39,7 +37,8 @@ func CreateChannelCommandsHandler(handlers map[string]telebot.HandlerFunc) teleb
 
 func OnChannelRegister(ctx telebot.Context) error {
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID, false)
+	channel := db.Channel{TgId: chat.ID}
+	channel.FirstOrCreate()
 	channel.Title = chat.Title
 	db.DB.Save(&channel)
 
@@ -65,7 +64,8 @@ func OnChannelHelp(ctx telebot.Context) error {
 }
 
 func OnChannelInfo(ctx telebot.Context) error {
-	channel := db_utils.GetOrCreateChannel(ctx.Chat().ID, true)
+	channel := db.Channel{TgId: ctx.Chat().ID}
+	channel.FirstOrCreate()
 	return utils.SilentlySendAndDelete(
 		ctx,
 		fmt.Sprintf(`ℹ️ Current Configuration:
@@ -84,12 +84,13 @@ func OnChannelConfigureFeedType(ctx telebot.Context) error {
 	}
 
 	feedType := payload.(string)
-	if !slices.Contains(models.FeedTypes, feedType) {
+	if !slices.Contains(db.FeedTypes, feedType) {
 		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories>!")
 	}
 
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID, false)
+	channel := db.Channel{TgId: chat.ID}
+	channel.FirstOrCreate()
 	channel.FeedType = feedType
 	db.DB.Save(&channel)
 	log.Printf("[*] Updated feed type of: <%d - %s - %s> to %s.", chat.ID, chat.Title, chat.Username, payload)
@@ -112,7 +113,8 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 	}
 
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID, false)
+	channel := db.Channel{TgId: chat.ID}
+	channel.FirstOrCreate()
 	channel.PostsCount = count
 	db.DB.Save(&channel)
 	log.Printf("[*] Updated count of: <%d - %s - %s> to %d.", chat.ID, chat.Title, chat.Username, count)
@@ -124,19 +126,16 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 
 func onChannelConfigureAssociationList(ctx telebot.Context, association string) error {
 	chat := ctx.Chat()
-	channel := db_utils.GetOrCreateChannel(chat.ID, false)
+	channel := db.Channel{TgId: chat.ID}
+	channel.FirstOrCreate()
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
-		return utils.SilentlySendAndDelete(ctx, strings.Join(
-			db_utils.GetAssociatedKeywords(&channel, association),
-			"\n",
-		))
+		return utils.SilentlySendAndDelete(ctx, channel.GetAssociatedKeywords(association))
 	}
 
-	keyword := db_utils.GetOrCreateKeyword(payload.(string))
-	var keywords []*models.Keyword
-	db.DB.Model(&channel).Where("keyword = ?", keyword.Keyword).Association(association).Find(&keywords)
-	if len(keywords) > 0 {
+	keyword := db.Keyword{Keyword: payload.(string)}
+	keyword.FirstOrCreate()
+	if len(channel.GetAssociatedKeywordsByKeyword(association, keyword)) > 0 {
 		db.DB.Model(&channel).Association(association).Delete(&keyword)
 		log.Printf("[*] <%d - %s - %s> removed %s: %s.", chat.ID, chat.Title, chat.Username, association, keyword.Keyword)
 		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("🚀 Removed %s: %s", association, keyword.Keyword))

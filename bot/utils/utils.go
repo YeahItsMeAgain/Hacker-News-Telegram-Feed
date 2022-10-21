@@ -4,8 +4,43 @@ import (
 	"log"
 	"time"
 
+	"fmt"
+	"reflect"
+	"strconv"
+
 	"gopkg.in/telebot.v3"
 )
+
+func StructsToString[E any](elements []E) string {
+	if len(elements) == 0 {
+		return "The list is empty."
+	}
+
+	var res string
+	for _, element := range elements {
+		val := reflect.ValueOf(element)
+
+		res += "----------\n"
+		for i := 0; i < val.NumField(); i++ {
+			if strVal := valToString(val.Field(i)); strVal != "" {
+				res += fmt.Sprintf("%s: %s\n", val.Type().Field(i).Name, strVal)
+			}
+		}
+		res += "----------\n"
+	}
+	return res
+}
+
+func valToString(val reflect.Value) string {
+	switch val.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return strconv.FormatInt(val.Int(), 10)
+	case reflect.String:
+		return val.String()
+	default:
+		return ""
+	}
+}
 
 func CreateBot(botToken string) *telebot.Bot {
 	pref := telebot.Settings{

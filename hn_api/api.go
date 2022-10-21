@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"hn_feed/config"
 	"hn_feed/db"
-	"hn_feed/db/models"
 	"net/http"
 	"sync"
 )
 
 const baseUrl = "https://hacker-news.firebaseio.com/v0"
 
-func GetNewPosts(feedType string) (map[int]models.Post, error) {
+func GetNewPosts(feedType string) (map[int]db.Post, error) {
 	var postsIds []int
 	r, err := http.Get(fmt.Sprintf("%s/%s.json", baseUrl, feedType))
 	if err != nil {
@@ -25,7 +24,7 @@ func GetNewPosts(feedType string) (map[int]models.Post, error) {
 
 	var wg sync.WaitGroup
 	var postsLock sync.RWMutex
-	posts := make(map[int]models.Post, config.Config.MaxPosts)
+	posts := make(map[int]db.Post, config.Config.MaxPosts)
 	for i := 0; i < config.Config.MaxPosts; i++ {
 		wg.Add(1)
 		go func(postCount int) {
@@ -35,7 +34,7 @@ func GetNewPosts(feedType string) (map[int]models.Post, error) {
 				return
 			}
 
-			var post models.Post
+			var post db.Post
 			json.NewDecoder(r.Body).Decode(&post)
 			if post.Title == "" {
 				return
@@ -46,7 +45,7 @@ func GetNewPosts(feedType string) (map[int]models.Post, error) {
 			}
 
 			postsLock.Lock()
-			db.DB.FirstOrCreate(&post, "post_id = ?", post.PostId) // Filling the ID field.
+			post.FirstOrCreate()
 			posts[postCount] = post
 			postsLock.Unlock()
 		}(i)

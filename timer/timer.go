@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hn_feed/config"
 	"hn_feed/db"
-	"hn_feed/db/models"
 	"hn_feed/hn_api"
 	"html"
 	"log"
@@ -13,7 +12,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"github.com/thoas/go-funk"
+	"github.com/samber/lo"
 	"gopkg.in/telebot.v3"
 	"gorm.io/gorm/clause"
 )
@@ -26,7 +25,7 @@ func ScheduleUpdates(bot *telebot.Bot) {
 			select {
 			case <-ticker.C:
 				var wg sync.WaitGroup
-				for _, feedType := range models.FeedTypes {
+				for _, feedType := range db.FeedTypes {
 					wg.Add(1)
 					go func(feedType string) {
 						defer wg.Done()
@@ -51,20 +50,22 @@ func updateChannels(feedType string, bot *telebot.Bot) {
 	}
 
 	var dbUpdates sync.WaitGroup
-	var channels []models.Channel
+	var channels []db.Channel
 	db.DB.Preload(clause.Associations).Find(&channels, "feed_type =?", feedType)
-
 	for i, post := range posts {
 		// TODO: filter with blacklist\whitelist.
-		channelsToUpdate := funk.Filter(channels, func(channel models.Channel) bool {
+		channelsToUpdate := lo.Filter(channels, func(channel db.Channel, _ int) bool {
 			return i < channel.PostsCount &&
-				slices.IndexFunc(channel.Posts, func(channelPost *models.Post) bool { return channelPost.PostId == post.PostId }) == -1
+				slices.IndexFunc(channel.Posts, func(channelPost *db.Post) bool { return channelPost.PostId == post.PostId }) == -1
 		})
-		for _, channel := range channelsToUpdate.([]models.Channel) {
+		for _, channel := range channelsToUpdate {
 			dbUpdates.Add(1)
-			go func(channel models.Channel, post models.Post) {
+			go func(channel db.Channel, post db.Post) {
 				defer dbUpdates.Done()
-				db.DB.Model(&channel).Association("Posts").Append(&post)
+				err := db.DB.Model(&channel).Association("Posts").Append(&post)
+				if err != nil {
+					log.Printf("[!] Error white appending post to channel, %s", err)
+				}
 			}(channel, post)
 			bot.Send(
 				&telebot.User{ID: channel.TgId},

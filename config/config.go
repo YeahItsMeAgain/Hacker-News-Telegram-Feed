@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type ConfigT struct {
+type config struct {
 	BotToken           string
 	SqliteDb           string
 	AdminIds           []int64
@@ -14,7 +14,7 @@ type ConfigT struct {
 	MaxPosts           int
 }
 
-var Config *ConfigT
+var Config *config
 
 func Init() {
 	file, _ := os.Open("config.json")

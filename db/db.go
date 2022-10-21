@@ -2,7 +2,6 @@ package db
 
 import (
 	"hn_feed/config"
-	"hn_feed/db/models"
 	"log"
 
 	"gorm.io/driver/sqlite"
@@ -20,8 +19,8 @@ func Init() {
 		log.Fatal("[!] Failed to connect to database.")
 	}
 	DB.AutoMigrate(
-		&models.Channel{},
-		&models.Post{},
-		&models.Keyword{},
+		&Channel{},
+		&Post{},
+		&Keyword{},
 	)
 }
