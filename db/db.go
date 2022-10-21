@@ -19,7 +19,9 @@ func Init() {
 	if err != nil {
 		log.Fatal("[!] Failed to connect to database.")
 	}
-	DB.AutoMigrate(&models.Channel{})
-	DB.AutoMigrate(&models.Post{})
-	DB.AutoMigrate(&models.Keyword{})
+	DB.AutoMigrate(
+		&models.Channel{},
+		&models.Post{},
+		&models.Keyword{},
+	)
 }
