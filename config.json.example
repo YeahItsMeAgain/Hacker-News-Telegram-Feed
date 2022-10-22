@@ -3,5 +3,6 @@
     "SqliteDb": "hn_feed.db",
     "AdminIds": [12345],
     "UpdateIntervalMins": 60,
-    "MaxPosts": 50
+    "MaxPosts": 50,
+    "ConcurrentChannelUpdateLimit": 15
 }

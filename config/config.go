@@ -7,11 +7,12 @@ import (
 )
 
 type config struct {
-	BotToken           string
-	SqliteDb           string
-	AdminIds           []int64
-	UpdateIntervalMins int
-	MaxPosts           int
+	BotToken                     string
+	SqliteDb                     string
+	AdminIds                     []int64
+	UpdateIntervalMins           int
+	MaxPosts                     int
+	ConcurrentChannelUpdateLimit int
 }
 
 var Config *config
