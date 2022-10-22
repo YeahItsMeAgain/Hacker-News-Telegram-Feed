@@ -11,10 +11,10 @@ import (
 var DB *gorm.DB
 
 func Init() {
-	log.Printf("[*] Initializing %s.", config.Config.SqliteDb)
+	log.Printf("[*] Initializing %s.", config.Get().SqliteDb)
 
 	var err error
-	DB, err = gorm.Open(sqlite.Open(config.Config.SqliteDb), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(config.Get().SqliteDb), &gorm.Config{})
 	if err != nil {
 		log.Fatal("[!] Failed to connect to database.")
 	}

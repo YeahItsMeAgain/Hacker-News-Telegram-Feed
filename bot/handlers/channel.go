@@ -59,7 +59,7 @@ func OnChannelHelp(ctx telebot.Context) error {
 		/count <1-%d>
 		/whitelist <:empty:\keyword\hostname>
 		/blacklist <:empty:\keyword\hostname>
-		`, config.Config.MaxPosts),
+		`, config.Get().MaxPosts),
 	)
 }
 
@@ -108,8 +108,8 @@ func OnChannelConfigureCount(ctx telebot.Context) error {
 
 	count, err := strconv.Atoi(payload.(string))
 	if err != nil ||
-		count < 1 || count > config.Config.MaxPosts {
-		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("❗ The count should be between 1 and %d!", config.Config.MaxPosts))
+		count < 1 || count > config.Get().MaxPosts {
+		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("❗ The count should be between 1 and %d!", config.Get().MaxPosts))
 	}
 
 	chat := ctx.Chat()

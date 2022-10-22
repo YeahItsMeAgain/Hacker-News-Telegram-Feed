@@ -12,7 +12,7 @@ import (
 
 func Init() *telebot.Bot {
 	log.Printf("[*] Creating the bot.")
-	bot := utils.CreateBot(config.Config.BotToken)
+	bot := utils.CreateBot(config.Get().BotToken)
 
 	log.Printf("[*] Creating handlers for the bot.")
 	initHandlers(bot)
@@ -39,6 +39,6 @@ func initHandlers(bot *telebot.Bot) {
 	))
 
 	admin := bot.Group()
-	admin.Use(middleware.Whitelist(config.Config.AdminIds...))
+	admin.Use(middleware.Whitelist(config.Get().AdminIds...))
 	admin.Handle(&handlers.AdminBtnList, handlers.HandleAdminListChannels)
 }

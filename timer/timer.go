@@ -20,7 +20,7 @@ import (
 )
 
 func ScheduleUpdates(bot *telebot.Bot) {
-	ticker := time.NewTicker(time.Duration(config.Config.UpdateIntervalMins) * time.Minute)
+	ticker := time.NewTicker(time.Duration(config.Get().UpdateIntervalMins) * time.Minute)
 	quit := make(chan struct{})
 	go func() {
 		for {
@@ -29,7 +29,7 @@ func ScheduleUpdates(bot *telebot.Bot) {
 				log.Println("[*] Updating channels.")
 				start := time.Now()
 				wg := &sync.WaitGroup{}
-				channelUpdatePool := make(chan struct{}, config.Config.ConcurrentChannelUpdateLimit)
+				channelUpdatePool := make(chan struct{}, config.Get().ConcurrentChannelUpdateLimit)
 				for _, feedType := range db.FeedTypes {
 					wg.Add(1)
 					go func(feedType string) {

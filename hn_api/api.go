@@ -24,8 +24,8 @@ func GetNewPosts(feedType string) (map[int]db.Post, error) {
 
 	var wg sync.WaitGroup
 	var postsLock sync.RWMutex
-	posts := make(map[int]db.Post, config.Config.MaxPosts)
-	for i := 0; i < config.Config.MaxPosts; i++ {
+	posts := make(map[int]db.Post, config.Get().MaxPosts)
+	for i := 0; i < config.Get().MaxPosts; i++ {
 		wg.Add(1)
 		go func(postCount int) {
 			defer wg.Done()
