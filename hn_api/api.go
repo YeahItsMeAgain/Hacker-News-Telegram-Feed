@@ -12,8 +12,6 @@ import (
 
 const baseUrl = "https://hacker-news.firebaseio.com/v0"
 
-var postsLock sync.RWMutex // GetNewPosts gets called in multiple goroutines, FirstOrCreate is not thread safe: https://github.com/go-gorm/gorm/issues/5803.
-
 func GetNewPosts(feedType string) (map[int]db.Post, error) {
 	var postsIds []int
 	r, err := http.Get(fmt.Sprintf("%s/%s.json", baseUrl, feedType))
@@ -25,6 +23,7 @@ func GetNewPosts(feedType string) (map[int]db.Post, error) {
 	json.NewDecoder(r.Body).Decode(&postsIds)
 
 	var wg sync.WaitGroup
+	var postsLock sync.RWMutex
 	posts := make(map[int]db.Post, config.Get().MaxPosts)
 	for i := 0; i < config.Get().MaxPosts; i++ {
 		wg.Add(1)
@@ -46,7 +45,7 @@ func GetNewPosts(feedType string) (map[int]db.Post, error) {
 			}
 
 			postsLock.Lock()
-			post.FirstOrCreate()
+			post.Upsert()
 			posts[postCount] = post
 			postsLock.Unlock()
 		}(i)

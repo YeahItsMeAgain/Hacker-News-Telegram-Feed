@@ -32,6 +32,7 @@ func initHandlers(bot *telebot.Bot) {
 			"/info":      handlers.OnChannelInfo,
 			"/feed":      handlers.OnChannelConfigureFeedType,
 			"/count":     handlers.OnChannelConfigureCount,
+			"/score":     handlers.OnChannelConfigureScore,
 			"/whitelist": handlers.OnChannelConfigureWhitelist,
 			"/blacklist": handlers.OnChannelConfigureBlacklist,
 			"/register":  handlers.OnChannelRegister,

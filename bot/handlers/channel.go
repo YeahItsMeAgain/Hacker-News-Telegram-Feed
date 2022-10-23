@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"hn_feed/bot/utils"
 	"hn_feed/config"
@@ -57,6 +58,7 @@ func OnChannelHelp(ctx telebot.Context) error {
 		/info
 		/feed <topstories\newstories>
 		/count <1-%d>
+		/score <number>
 		/whitelist <:empty:\keyword\hostname>
 		/blacklist <:empty:\keyword\hostname>
 		`, config.Get().MaxPosts),
@@ -72,55 +74,76 @@ func OnChannelInfo(ctx telebot.Context) error {
 
 		Feed type: %s.
 		Max posts per hour: %d.
-		`, channel.FeedType, channel.PostsCount,
+		Minimum score: %d.
+		`, channel.FeedType, channel.PostsCount, channel.MinimumScore,
 		),
 	)
 }
 
-func OnChannelConfigureFeedType(ctx telebot.Context) error {
+func onChannelConfigure(ctx telebot.Context, field string, updateChannel func(*db.Channel, string) error) error {
 	payload := ctx.Get(channelCommandPayloadKey)
 	if payload == nil || payload == "" {
-		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories>!")
+		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("❗ Invalid %s!", field))
 	}
 
-	feedType := payload.(string)
-	if !slices.Contains(db.FeedTypes, feedType) {
-		return utils.SilentlySendAndDelete(ctx, "❗ Specify the feed type: <topstories\\newstories>!")
-	}
-
+	value := payload.(string)
 	chat := ctx.Chat()
 	channel := db.Channel{TgId: chat.ID}
 	channel.FirstOrCreate()
-	channel.FeedType = feedType
+	err := updateChannel(&channel, value)
+	if err != nil {
+		return utils.SilentlySendAndDelete(ctx, err.Error())
+	}
 	db.DB.Save(&channel)
-	log.Printf("[*] Updated feed type of: <%d - %s - %s> to %s.", chat.ID, chat.Title, chat.Username, payload)
+	log.Printf("[*] Updated %s of: <%d - %s - %s> to %s.", field, chat.ID, chat.Title, chat.Username, value)
 	return utils.SilentlySendAndDelete(
 		ctx,
-		fmt.Sprintf("🚀 Configured feed type to: %s!", payload),
+		fmt.Sprintf("🚀 Configured %s to: %s!", field, value),
+	)
+}
+
+func OnChannelConfigureFeedType(ctx telebot.Context) error {
+	return onChannelConfigure(
+		ctx,
+		"feed type",
+		func(channel *db.Channel, feedType string) error {
+			if !slices.Contains(db.FeedTypes, feedType) {
+				return errors.New("❗ Specify the feed type: <topstories\\newstories>")
+			}
+			channel.FeedType = feedType
+			return nil
+		},
 	)
 }
 
 func OnChannelConfigureCount(ctx telebot.Context) error {
-	payload := ctx.Get(channelCommandPayloadKey)
-	if payload == nil || payload == "" {
-		return utils.SilentlySendAndDelete(ctx, "❗ Specify the number of posts you want to see!")
-	}
-
-	count, err := strconv.Atoi(payload.(string))
-	if err != nil ||
-		count < 1 || count > config.Get().MaxPosts {
-		return utils.SilentlySendAndDelete(ctx, fmt.Sprintf("❗ The count should be between 1 and %d!", config.Get().MaxPosts))
-	}
-
-	chat := ctx.Chat()
-	channel := db.Channel{TgId: chat.ID}
-	channel.FirstOrCreate()
-	channel.PostsCount = count
-	db.DB.Save(&channel)
-	log.Printf("[*] Updated count of: <%d - %s - %s> to %d.", chat.ID, chat.Title, chat.Username, count)
-	return utils.SilentlySendAndDelete(
+	return onChannelConfigure(
 		ctx,
-		fmt.Sprintf("🚀 Configured count to: %d posts per hour!", count),
+		"posts count",
+		func(channel *db.Channel, value string) error {
+			count, err := strconv.Atoi(value)
+			if err != nil ||
+				count < 1 || count > config.Get().MaxPosts {
+				return fmt.Errorf("❗ The count should be between 1 and %d", config.Get().MaxPosts)
+			}
+			channel.PostsCount = count
+			return nil
+		},
+	)
+}
+
+func OnChannelConfigureScore(ctx telebot.Context) error {
+	return onChannelConfigure(
+		ctx,
+		"minimum score",
+		func(channel *db.Channel, value string) error {
+			score, err := strconv.Atoi(value)
+			if err != nil {
+				return errors.New("❗ Invalid minimum score")
+			}
+			channel.MinimumScore = score
+			return nil
+		},
 	)
 }
 

@@ -16,6 +16,7 @@ type Channel struct {
 	Title               string
 	FeedType            string     `gorm:"default:topstories"`
 	PostsCount          int        `gorm:"default:10"`
+	MinimumScore        int        `gorm:"default:1"`
 	Posts               []*Post    `gorm:"many2many:channels_posts;"`
 	WhitelistedKeywords []*Keyword `gorm:"many2many:whitelisted_users;"`
 	BlacklistedKeywords []*Keyword `gorm:"many2many:blacklisted_users;"`

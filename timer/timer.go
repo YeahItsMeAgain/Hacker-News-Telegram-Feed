@@ -97,6 +97,10 @@ func shouldUpdateChannel(postCount int, post db.Post, channel db.Channel) bool {
 		return false
 	}
 
+	if post.Score < channel.MinimumScore {
+		return false
+	}
+
 	if slices.IndexFunc(channel.Posts, func(channelPost *db.Post) bool {
 		return channelPost.PostId == post.PostId
 	}) >= 0 {
