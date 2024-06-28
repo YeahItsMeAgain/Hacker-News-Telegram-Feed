@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"gorm.io/gorm"
+	"log"
 )
 
 type Post struct {
@@ -16,8 +17,11 @@ type Post struct {
 }
 
 func (post *Post) Upsert() {
-	DB.Clauses(clause.OnConflict{
+	res := DB.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "post_id"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{"score": post.Score}),
 	}).Create(post)
+	if res.Error != nil {
+		log.Println("[!] Error creating post %d - %s (%s)", post.ID, post.Title, res.Error.Error())
+	}
 }

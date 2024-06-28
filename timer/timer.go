@@ -12,11 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/exp/slices"
-
 	"github.com/samber/lo"
 	"gopkg.in/telebot.v3"
-	"gorm.io/gorm/clause"
 )
 
 func ScheduleUpdates(bot *telebot.Bot) {
@@ -54,7 +51,10 @@ func updateChannels(feedType string, bot *telebot.Bot, wg *sync.WaitGroup, chann
 	}
 
 	var channels []db.Channel
-	db.DB.Preload(clause.Associations).Find(&channels, "feed_type =?", feedType)
+	db.DB.
+		Preload("WhitelistedKeywords").
+		Preload("BlacklistedKeywords").
+		Find(&channels, "feed_type =?", feedType)
 	if len(channels) == 0 {
 		log.Printf("[*] No channels waiting for %s.", feedType)
 		return
@@ -67,15 +67,12 @@ func updateChannels(feedType string, bot *telebot.Bot, wg *sync.WaitGroup, chann
 		for _, channel := range channelsToUpdate {
 			wg.Add(1)
 			channelUpdatePool <- struct{}{}
-			go func(channelId uint, post db.Post) {
+			go func(channel db.Channel, post db.Post) {
 				defer func() {
 					wg.Done()
 					<-channelUpdatePool
 				}()
 
-				// https://github.com/go-gorm/gorm/issues/5801
-				channel := db.Channel{}
-				db.DB.First(&channel, "id=?", channelId)
 				err := db.DB.Model(&channel).Association("Posts").Append(&post)
 				if err != nil {
 					log.Printf("[!] Error white appending post to channel, %s", err)
@@ -87,7 +84,7 @@ func updateChannels(feedType string, bot *telebot.Bot, wg *sync.WaitGroup, chann
 					telebot.NoPreview,
 					telebot.ModeHTML,
 				)
-			}(channel.ID, post)
+			}(channel, post)
 		}
 	}
 }
@@ -101,9 +98,9 @@ func shouldUpdateChannel(postCount int, post db.Post, channel db.Channel) bool {
 		return false
 	}
 
-	if slices.IndexFunc(channel.Posts, func(channelPost *db.Post) bool {
-		return channelPost.PostId == post.PostId
-	}) >= 0 {
+	if db.DB.Model(&channel).
+		Where("channels_posts.post_id = ?", post.ID).
+		Association("Posts").Count() > 0 {
 		return false
 	}
 
