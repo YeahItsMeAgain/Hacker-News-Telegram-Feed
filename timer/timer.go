@@ -60,11 +60,18 @@ func updateChannels(feedType string, bot *telebot.Bot, wg *sync.WaitGroup, chann
 		return
 	}
 
-	for i, post := range posts {
+	channelsPostCount := make(map[uint]int, len(channels))
+	for _, post := range posts {
 		channelsToUpdate := lo.Filter(channels, func(channel db.Channel, _ int) bool {
-			return shouldUpdateChannel(i, post, channel)
+			return shouldUpdateChannel(post, channel)
 		})
+
 		for _, channel := range channelsToUpdate {
+			if channelsPostCount[channel.ID] > channel.PostsCount {
+				continue
+			}
+			channelsPostCount[channel.ID]++
+
 			wg.Add(1)
 			channelUpdatePool <- struct{}{}
 			go func(channel db.Channel, post db.Post) {
@@ -89,11 +96,7 @@ func updateChannels(feedType string, bot *telebot.Bot, wg *sync.WaitGroup, chann
 	}
 }
 
-func shouldUpdateChannel(postCount int, post db.Post, channel db.Channel) bool {
-	if postCount >= channel.PostsCount {
-		return false
-	}
-
+func shouldUpdateChannel(post db.Post, channel db.Channel) bool {
 	if post.Score < channel.MinimumScore {
 		return false
 	}

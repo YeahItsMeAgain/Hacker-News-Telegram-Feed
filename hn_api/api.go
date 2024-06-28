@@ -8,11 +8,13 @@ import (
 	"hn_feed/db"
 	"net/http"
 	"sync"
+
+	"slices"
 )
 
 const baseUrl = "https://hacker-news.firebaseio.com/v0"
 
-func GetNewPosts(feedType string) (map[int]db.Post, error) {
+func GetNewPosts(feedType string) ([]db.Post, error) {
 	var postsIds []int
 	r, err := http.Get(fmt.Sprintf("%s/%s.json", baseUrl, feedType))
 	if err != nil {
@@ -24,7 +26,7 @@ func GetNewPosts(feedType string) (map[int]db.Post, error) {
 
 	var wg sync.WaitGroup
 	var postsLock sync.RWMutex
-	posts := make(map[int]db.Post, config.Get().MaxPosts)
+	posts := make([]db.Post, config.Get().MaxPosts)
 	for i := 0; i < config.Get().MaxPosts; i++ {
 		wg.Add(1)
 		go func(postCount int) {
@@ -51,5 +53,10 @@ func GetNewPosts(feedType string) (map[int]db.Post, error) {
 		}(i)
 	}
 	wg.Wait()
+
+	// Sorting By Score (Desc).
+	slices.SortStableFunc[[]db.Post](posts, func(a, b db.Post) int {
+		return b.Score - a.Score
+	})
 	return posts, nil
 }
